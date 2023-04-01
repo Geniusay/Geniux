@@ -15,8 +15,26 @@
 #define READ_WRITE_LATCH	3
 #define PIT_COUNTROL_PORT	0x43
 
+//中断是 100次/1s 那么1次中断就是 1000/100 = 10ms
+#define mil_seconds_pre_intr (1000/IRQ0_FREQUENCY)
 //自中断开启以来总的滴答数
 uint32_t ticks;
+
+//根据时间休眠
+void ticks_to_sleep(uint32_t sleep_ticks) {
+	uint32_t start_tick = ticks;
+
+	while (ticks - start_tick < sleep_ticks) {
+		thread_yield();
+	}
+}
+
+
+void mtime_sleep(uint32_t m_seconds) {
+	uint32_t sleep_ticks = DIV_ROUND_UP(m_seconds, mil_seconds_pre_intr);
+	ASSERT(sleep_ticks > 0);
+	ticks_to_sleep(sleep_ticks);
+}
 
 void frequency_set(uint8_t counter_port, uint8_t counter_no, uint8_t rwl, uint8_t counter_mode, uint16_t counter_value)
 {
@@ -29,7 +47,7 @@ void frequency_set(uint8_t counter_port, uint8_t counter_no, uint8_t rwl, uint8_
 void intr_timer_handler(void)
 {
 	struct task_struct* cur_thread = running_thread();   //得到pcb指针
-	ASSERT(cur_thread->stack_magic == 0x23333333);	       //检测栈是否溢出
+	ASSERT(cur_thread->stack_magic == 0x66666666);	       //检测栈是否溢出
 
 	++ticks;
 	++cur_thread->elapsed_ticks;

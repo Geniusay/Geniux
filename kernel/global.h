@@ -89,4 +89,6 @@ struct gdt_desc
 	uint8_t  base_high_byte;
 };
 
+#define UNUSED __attribute__((unused))
+
 #endif
